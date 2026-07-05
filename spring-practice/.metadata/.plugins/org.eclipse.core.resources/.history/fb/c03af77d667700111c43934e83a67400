@@ -1,0 +1,8 @@
+package com.example.gateway.security;
+
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+}

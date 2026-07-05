@@ -1,0 +1,17 @@
+spring.application.name=API-GATEWAY
+
+server.port=8080
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+spring.cloud.gateway.routes[0].id=department-service
+spring.cloud.gateway.routes[0].uri=lb://DEPARTMENT-SERVICE
+spring.cloud.gateway.routes[0].predicates[0]=Path=/departments/**
+
+spring.cloud.gateway.routes[1].id=employee-service
+spring.cloud.gateway.routes[1].uri=lb://EMPLOYEE-SERVICE
+spring.cloud.gateway.routes[1].predicates[0]=Path=/employees/**
+
+logging.level.org.springframework.cloud.gateway=DEBUG
+
+jwt.secret=mySecretKeymySecretKeymySecretKeymySecretKey
