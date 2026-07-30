@@ -1,0 +1,29 @@
+package com.auth.demo.dto;
+
+package com.auth.demo.dto;
+
+public class GithubPullRequestDetails {
+
+    private Head head;
+
+    public Head getHead() {
+        return head;
+    }
+
+    public void setHead(Head head) {
+        this.head = head;
+    }
+
+    public static class Head {
+
+        private String ref;
+
+        public String getRef() {
+            return ref;
+        }
+
+        public void setRef(String ref) {
+            this.ref = ref;
+        }
+    }
+}

@@ -1,0 +1,91 @@
+package com.example.demo.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.demo.dto.LoginResponse;
+import com.example.demo.dto.RegisterRequest;
+import com.example.demo.service.AuthClientService;
+
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class AuthController {
+
+    @Autowired
+    AuthClientService authService;
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "login";
+    }
+
+    @PostMapping("/login")
+    public String login(
+            @RequestParam String username,
+            @RequestParam String password,
+            HttpSession session,
+            Model model) {
+
+        LoginResponse response =
+        		authService.login(username, password);
+
+        if (response == null) {
+
+            model.addAttribute(
+                    "error",
+                    "Invalid Username or Password");
+
+            return "login";
+        }
+
+        session.setAttribute("JWT", response.getToken());
+
+        return "redirect:/";
+    }
+    @GetMapping("/register")
+    public String registerPage() {
+
+        return "register";
+
+    }
+
+    @PostMapping("/register")
+    public String register(
+
+            @RequestParam String username,
+            @RequestParam String email,
+            @RequestParam String password,
+
+            Model model) {
+
+        RegisterRequest request =
+                new RegisterRequest(
+                        username,
+                        email,
+                        password);
+
+        boolean success =
+        		authService.register(request);
+
+        if (success) {
+
+            return "redirect:/login";
+
+        }
+
+        model.addAttribute(
+                "error",
+                "Registration Failed");
+
+        return "register";
+
+    }
+
+}
+
+

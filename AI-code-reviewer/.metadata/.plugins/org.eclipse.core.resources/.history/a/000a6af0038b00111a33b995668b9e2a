@@ -1,0 +1,5 @@
+package com.auth.demo.security;
+
+public class GithubSecurityConfig {
+
+}

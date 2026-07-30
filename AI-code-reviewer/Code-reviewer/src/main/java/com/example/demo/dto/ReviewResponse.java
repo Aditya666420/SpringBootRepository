@@ -1,0 +1,29 @@
+package com.example.demo.dto;
+
+
+
+
+public class ReviewResponse {
+
+    private String review;
+
+	public ReviewResponse() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	public ReviewResponse(String review) {
+		super();
+		this.review = review;
+	}
+
+	public String getReview() {
+		return review;
+	}
+
+	public void setReview(String review) {
+		this.review = review;
+	}
+    
+    
+}

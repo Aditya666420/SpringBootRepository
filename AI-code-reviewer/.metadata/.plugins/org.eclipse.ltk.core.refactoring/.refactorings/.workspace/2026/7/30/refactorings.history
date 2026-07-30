@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;AI_Code_reviewer&apos; to &apos;Ai-code-reviewer&apos;" description="Rename resource &apos;AI_Code_reviewer&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="/AI_Code_reviewer" name="Ai-code-reviewer" stamp="1784747092913" updateReferences="true"/>&#x0A;<refactoring comment="Rename resource &apos;Ai-code-reviewer&apos; to &apos;Code-reviewer&apos;" description="Rename resource &apos;Ai-code-reviewer&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="/Ai-code-reviewer" name="Code-reviewer" stamp="1784747264809" updateReferences="true"/>
+</session>

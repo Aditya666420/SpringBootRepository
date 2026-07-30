@@ -1,0 +1,10 @@
+package com.auth.demo.dto;
+
+
+public class GithubFileResponse {
+
+    private String name;
+    private String path;
+    private String content;
+    private String encoding;
+}

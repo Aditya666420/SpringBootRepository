@@ -1,0 +1,160 @@
+package com.example.demo.service;
+
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import com.example.demo.dto.DashboardResponse;
+import com.example.demo.dto.ErrorResponse;
+import com.example.demo.dto.ReviewRequest;
+import com.example.demo.dto.ReviewResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Service
+public class ReviewClientService {
+
+//    private final WebClient webClient =
+//            WebClient.builder().build();
+	
+	@Autowired
+	private WebClient webClient;
+
+    @Value("${review.service.url}")
+    private String reviewServiceUrl;
+
+    public String reviewCode(String code,String language) throws JsonMappingException, JsonProcessingException {
+
+        ReviewRequest request = new ReviewRequest();
+
+       
+        request.setCode(code);
+        request.setLanguage(language);
+
+        try {
+        	String reviewUri=reviewServiceUrl+"api/reviews";
+
+            ReviewResponse response =
+                    webClient.post()
+                            .uri(reviewUri)
+                            .bodyValue(request)
+                            .retrieve()
+                            .bodyToMono(ReviewResponse.class)
+                            .block();
+
+            return response.getReview();
+
+        } catch (WebClientResponseException ex) {
+
+        	  ObjectMapper mapper =
+        	            new ObjectMapper();
+
+        	    ErrorResponse error =
+        	            mapper.readValue(
+        	                    ex.getResponseBodyAsString(),
+        	                    ErrorResponse.class);
+
+        	    return """
+        	            ERROR
+
+        	            %s
+
+        	            %s
+        	            """
+        	            .formatted(
+        	                    error.getError(),
+        	                    error.getMessage());
+
+        } catch (Exception ex) {
+
+        	  ObjectMapper mapper =
+        	            new ObjectMapper();
+
+        	    ErrorResponse error =
+        	            mapper.readValue(
+        	                    ((WebClientResponseException) ex).getResponseBodyAsString(),
+        	                    ErrorResponse.class);
+
+        	    return """
+        	            ERROR
+
+        	            %s
+
+        	            %s
+        	            """
+        	            .formatted(
+        	                    error.getError(),
+        	                    error.getMessage());
+        }
+    }
+    public List<DashboardResponse> getResponseForALL(){
+    	
+    
+   
+    	
+	    	try {
+	        	String reviewUri=reviewServiceUrl+"api/reviews";
+	
+	            List<DashboardResponse> resp =
+	                    webClient.get()
+	                            .uri(reviewUri)
+	                            .retrieve()
+	                            .bodyToFlux(DashboardResponse.class)
+	                            .collectList()
+	                            .block();
+	                            
+	
+	            return resp;
+	
+	        } catch (WebClientResponseException ex) {
+	
+	        	  
+	        	  ex.printStackTrace();
+	        	  return Collections.emptyList();
+	    	
+	    }
+	    	 catch (Exception ex) {
+
+	    		    ex.printStackTrace();
+	    		    return Collections.emptyList();
+	    		}
+    }
+    public DashboardResponse getResponseForId(String id){
+    	
+        
+    	   
+    	
+    	try {
+        	String reviewUri=reviewServiceUrl+"api/reviews"+"/" +id;
+
+            DashboardResponse resp =
+                    webClient.get()
+                            .uri(reviewUri)
+                            .retrieve()
+                            .bodyToFlux(DashboardResponse.class)
+                            .blockFirst();
+                            
+
+            return resp;
+
+        } catch (WebClientResponseException ex) {
+
+        	  
+        	  ex.printStackTrace();
+        	  return null;
+    	
+    }
+    	 catch (Exception ex) {
+
+    		    ex.printStackTrace();
+    		    return null;
+    		}
+}
+}

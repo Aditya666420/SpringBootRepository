@@ -1,0 +1,36 @@
+package com.auth.demo.security;
+@Configuration
+@EnableWebSecurity
+public class GithubSecurityConfig {
+
+	
+
+	    @Bean
+	    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+	        http
+	                .csrf(csrf -> csrf.disable())
+
+	                .authorizeHttpRequests(auth -> auth
+
+	                        .requestMatchers(
+	                                "/login",
+	                                "/auth/**",
+	                                "/oauth2/**",
+	                                "/github/**")
+	                        .permitAll()
+
+	                        .anyRequest()
+	                        .authenticated())
+
+	                .oauth2Login(oauth -> oauth
+
+	                        .defaultSuccessUrl("/github/success", true)
+
+	                );
+
+	        return http.build();
+	    }
+
+	
+}

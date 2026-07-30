@@ -1,0 +1,105 @@
+package com.example.demo.controller;
+
+
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.dto.DashboardResponse;
+import com.example.demo.dto.ReviewRequest;
+import com.example.demo.service.ReviewClientService;
+
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class ReviewController {
+
+    @Autowired
+    private ReviewClientService reviewClientService;
+    
+    @GetMapping("/")
+    public String home(Model model) {
+        model.addAttribute("review", null);
+        return "index";
+    }
+
+
+
+    @PostMapping("/review")
+    @ResponseBody
+    public ResponseEntity<?> reviewCode(
+            @RequestBody ReviewRequest req ,@RequestHeader("Authorization") String token  /*name of HTML field*/,
+            Model model) {
+    	String review="";
+        try {
+        	
+        	System.out.println("Token : "+token);
+             review =
+                    reviewClientService.reviewCode(req.getCode(),req.getLanguage(),token);
+         
+            
+        } catch (Exception e) {
+
+          ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+        return ResponseEntity.ok(review);
+    }
+    @GetMapping("/dashboardAdmin")
+    public String dashboard(Model model) {
+       
+        List<DashboardResponse> reviewsList = reviewClientService.getResponseForALL();
+        model.addAttribute("reviews", reviewsList);
+        return "Dashboard";
+    }
+    @GetMapping("/dashboard")
+    public String dashboardUser(@RequestHeader("Authorization") String token, Model model) {
+       
+        List<DashboardResponse> reviewsList = reviewClientService.getResponseForALLByUserId(token);
+        model.addAttribute("reviews", reviewsList);
+        return "Dashboard";
+    }
+    @GetMapping("/review")
+    public String getReviewById(@RequestParam String id,Model model) {
+    	try {
+    	DashboardResponse singleReview = reviewClientService.getResponseForId(id);
+    	String code=singleReview.code;
+    	String review= singleReview.reviewResult;
+    	model.addAttribute("code",code);
+        model.addAttribute("review", review);
+    	
+    	
+    	}catch (Exception e) {
+
+            model.addAttribute(
+                    "error",
+                    e.getMessage());
+        }
+    	return "index";
+    	
+    
+    }
+    @DeleteMapping("/delete")
+    @ResponseBody
+    public ResponseEntity<?> deleteById(@RequestParam String id,Model model) {
+    	try {
+    	String deleteResp = reviewClientService.deleteForId(id);
+    	
+    	return ResponseEntity.ok().body(deleteResp);
+    	
+    	}catch (Exception e) {
+
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    	
+    }
+   
+    
+}

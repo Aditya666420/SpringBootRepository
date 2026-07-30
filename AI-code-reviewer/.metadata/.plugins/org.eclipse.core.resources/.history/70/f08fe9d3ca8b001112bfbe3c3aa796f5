@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <title>AI Pull Request Reviewer</title>
+
+    <script th:inline="javascript">
+        window.reviewPrUrl = "http://localhost:8080/github/pull";
+        window.homeUrl = /*[[@{/}]]*/ '';
+    </script>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/prReview.js}"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1>AI Pull Request Reviewer</h1>
+
+        <div class="header-actions">
+
+            <button
+                    type="button"
+                    id="homeBtn"
+                    class="dashboard-btn">
+                Home
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="pr-container">
+
+        <label for="prUrl">
+            GitHub Pull Request URL
+        </label>
+
+        <input
+                type="text"
+                id="prUrl"
+                class="github-url-input"
+                placeholder="https://github.com/owner/repository/pull/1">
+
+        <br><br>
+
+        <button
+                type="button"
+                id="reviewPrBtn"
+                class="dashboard-btn">
+
+            Review Pull Request
+
+        </button>
+
+    </div>
+
+    <br>
+
+    <div
+            id="loading"
+            style="display:none;">
+
+        Reviewing Pull Request...
+
+    </div>
+
+    <div
+            id="reviewContainer">
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

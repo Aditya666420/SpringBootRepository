@@ -1,0 +1,211 @@
+package com.auth.demo.controller;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import com.auth.demo.dto.GithubFileResponse;
+import com.auth.demo.dto.GithubPullRequest;
+import com.auth.demo.dto.GithubPullRequestFile;
+import com.auth.demo.dto.ReviewRequest;
+import com.auth.demo.dto.ReviewResponse;
+import com.auth.demo.util.ExtractLang;
+import com.auth.demo.util.GithubPullRequestParser;
+
+import jakarta.servlet.http.HttpServletResponse;
+
+@RestController
+@RequestMapping("/github")
+public class GithubController {
+
+    private final OAuth2AuthorizedClientService clientService;
+    private final WebClient webClient;
+
+
+    public GithubController(OAuth2AuthorizedClientService clientService,WebClient webClient) {
+        this.clientService = clientService;
+        this.webClient = webClient;
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> profile(
+            OAuth2AuthenticationToken authentication) {
+
+        OAuth2AuthorizedClient client =
+                clientService.loadAuthorizedClient(
+                        authentication.getAuthorizedClientRegistrationId(),
+                        authentication.getName());
+
+        String token = client.getAccessToken().getTokenValue();
+
+        String response = webClient.get()
+
+                .uri("https://api.github.com/user")
+
+                .headers(headers ->
+                        headers.setBearerAuth(token))
+
+                .retrieve()
+
+                .bodyToMono(String.class)
+
+                .block();
+
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/success")
+    public void success(HttpServletResponse response) throws IOException {
+
+        response.sendRedirect("http://localhost:8080/ui?githubConnected=true");
+
+    }
+    @GetMapping("/repos")
+    public ResponseEntity<?> repos(OAuth2AuthenticationToken authentication) {
+
+        OAuth2AuthorizedClient client =
+                clientService.loadAuthorizedClient(
+                        authentication.getAuthorizedClientRegistrationId(),
+                        authentication.getName());
+
+        String token = client.getAccessToken().getTokenValue();
+
+        String response = webClient.get()
+                .uri("https://api.github.com/user/repos")
+                .headers(h -> h.setBearerAuth(token))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/file")
+    public ResponseEntity<?> file(
+            @RequestParam String owner,
+            @RequestParam String repo,
+            @RequestParam String path,
+            OAuth2AuthenticationToken authentication) {
+
+        OAuth2AuthorizedClient client =
+                clientService.loadAuthorizedClient(
+                        authentication.getAuthorizedClientRegistrationId(),
+                        authentication.getName());
+
+        String token = client.getAccessToken().getTokenValue();
+        String code = getFileContent(owner, repo, path, token);
+
+        return ResponseEntity.ok(code);
+    }
+
+    @GetMapping("/pull")
+    public ResponseEntity<?> getPullRequestFiles(
+            @RequestParam String url,@RequestHeader("Authorization") String jwtToken,
+            OAuth2AuthenticationToken authentication) {
+    	
+    	System.out.println("Oauth2  :"+authentication);
+
+        GithubPullRequest pr =
+                GithubPullRequestParser.parse(url);
+
+        OAuth2AuthorizedClient client =
+                clientService.loadAuthorizedClient(
+                        authentication.getAuthorizedClientRegistrationId(),
+                        authentication.getName());
+
+        String token = client.getAccessToken().getTokenValue();
+
+        List<GithubPullRequestFile> files =
+                webClient.get()
+                        .uri("https://api.github.com/repos/{owner}/{repo}/pulls/{pull}/files",
+                                pr.getOwner(),
+                                pr.getRepo(),
+                                pr.getPullNumber())
+                        .headers(h -> h.setBearerAuth(token))
+                        .retrieve()
+                        .bodyToFlux(GithubPullRequestFile.class)
+                        .collectList()
+                        .block();
+
+        // Keep only Java files
+        files = files.stream()
+                .filter(file -> file.getFilename().endsWith(".java"))
+                .toList();
+
+        List<Map<String, String>> result = new ArrayList<>();
+
+        for (GithubPullRequestFile file : files) {
+
+            String code = getFileContent(
+                    pr.getOwner(),
+                    pr.getRepo(),
+                    file.getFilename(),
+                    token);
+
+            ReviewRequest request = new ReviewRequest();
+            request.setCode(code);
+            request.setLanguage(ExtractLang.getLanguage(file.getFilename()));
+            Map<String, String> fileDetails = new HashMap<>();
+            fileDetails.put("filename", file.getFilename());
+            try {
+            ReviewResponse review = webClient.post()
+                    .uri("http://localhost:8080/api/reviews")
+                    .header(HttpHeaders.AUTHORIZATION, jwtToken)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(ReviewResponse.class)
+                    .block();
+            fileDetails.put("review", review.getReview());
+            }catch(Exception e){
+            	e.printStackTrace();
+            	 fileDetails.put("review", "Not available due to error : "+e.getMessage());
+            }
+
+           
+           
+
+            result.add(fileDetails);
+        }
+
+        return ResponseEntity.ok(result);
+    }
+    private String getFileContent(
+            String owner,
+            String repo,
+            String path,
+            String token) {
+    	System.out.println("Owner : " + owner);
+    	System.out.println("Repo : " + repo);
+    	System.out.println("Path : " + path);
+        GithubFileResponse file = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .scheme("https")
+                        .host("api.github.com")
+                        .path("/repos/{owner}/{repo}/contents/{path}")
+                        .build(owner, repo, path))
+                .headers(h -> h.setBearerAuth(token))
+                .retrieve()
+                .bodyToMono(GithubFileResponse.class)
+                .block();
+
+        String base64 = file.getContent().replace("\n", "");
+
+        return new String(
+                Base64.getDecoder().decode(base64),
+                StandardCharsets.UTF_8);
+    }
+}

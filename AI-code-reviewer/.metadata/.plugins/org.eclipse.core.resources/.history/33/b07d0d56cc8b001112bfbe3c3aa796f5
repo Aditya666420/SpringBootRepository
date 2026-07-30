@@ -1,0 +1,10 @@
+package com.example.demo.dto;
+
+public class PullRequestReviewResponse {
+
+    private String filename;
+    private String review;
+
+    // getters and setters
+    
+}

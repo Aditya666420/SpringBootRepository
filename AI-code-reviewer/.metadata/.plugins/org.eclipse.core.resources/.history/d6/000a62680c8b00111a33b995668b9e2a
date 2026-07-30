@@ -1,0 +1,51 @@
+package com.gateway.demo.securtity;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+
+import com.gateway.demo.service.JwtFilter;
+
+/*
+ * Reactive programming is mainly about handling many concurrent requests 
+ * efficiently by not blocking threads while waiting for slow operations (like network calls or I/O).*/
+
+@Configuration
+@EnableWebFluxSecurity
+public class SecurityConfig {
+	
+	
+	
+
+	    @Bean
+	    public SecurityWebFilterChain security(ServerHttpSecurity http) {
+
+	        return http
+	                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+
+	                .authorizeExchange(ex -> ex
+	                        .pathMatchers(
+	                                "/auth/**",
+	                                "/ui/**",
+	                                "/oauth2/**",
+	                                "/login/oauth2/**",
+	                                "/github/**"
+	                                
+	                        ).permitAll()
+
+	                        .anyExchange().permitAll()
+	                )
+
+	                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+
+	                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+
+	                .build();
+	    }
+
+	
+
+}

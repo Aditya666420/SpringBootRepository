@@ -1,0 +1,62 @@
+package com.example.demo.controller;
+
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import com.example.demo.dto.DashboardResponse;
+import com.example.demo.dto.ReviewRequest;
+import com.example.demo.dto.ReviewResponse;
+import com.example.demo.entity.Review;
+import com.example.demo.service.ReviewService;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/reviews")
+
+public class ReviewController {
+
+	@Autowired
+    private  ReviewService reviewService;
+
+    @PostMapping
+    public ReviewResponse reviewCode(
+            @RequestBody ReviewRequest request,@RequestHeader("Authorization") String token) {
+    	
+    	String jwt = token.substring(7);
+
+        return reviewService.reviewCode(
+                request.getCode(),request.getLanguage(),jwt);
+    }
+
+    @GetMapping
+    public List<Review> getAllReviews() {
+
+        return reviewService.getAllReviews();
+    }
+    @GetMapping("/userReview")
+    public List<DashboardResponse> getReviewByUserId(@RequestHeader("Authorization")String token) {
+    	
+    	String jwt = token.substring(7);
+        return reviewService.getAllByUserId(jwt);
+    }
+
+    @GetMapping("/{id}")
+    public Review getReviewById(
+            @PathVariable String id,@RequestHeader("Authorization")String token) {
+
+        return reviewService.getReviewById(id, token);
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteReview(
+            @PathVariable String id) {
+
+        reviewService.deleteReview(id);
+
+        return "Review deleted successfully";
+    }
+}

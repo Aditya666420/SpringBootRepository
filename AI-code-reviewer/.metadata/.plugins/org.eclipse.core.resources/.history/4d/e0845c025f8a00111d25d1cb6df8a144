@@ -1,0 +1,70 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+	// Delete button click
+	   document.querySelectorAll(".delete-btn")
+	   .forEach(button => {
+
+	       button.addEventListener("click", function(event) {
+
+	           event.stopPropagation();
+
+	           const id = this.dataset.id;
+
+	           console.log("Deleting id:", id);
+
+	           fetch(window.deleteUrl + "?id=" + id, {
+				
+	               method: "DELETE",
+				   headers: {
+				                    "Authorization": "Bearer " + token
+				                }
+	           })
+	           .then(response => {
+
+	               if(response.ok){
+	                   console.log("Deleted successfully");
+	                   location.reload();
+	               }
+	               else {
+	                   console.error("Delete failed");
+	               }
+
+	           })
+	           .catch(error => {
+	               console.error("Error:", error);
+	           });
+
+	       });
+
+	   });
+	/*document.querySelectorAll(".review-row").forEach(row => {
+	        row.addEventListener("click", () => {
+	            const id = row.dataset.id;
+	            const url = row.dataset.url;
+
+	            window.location.href = `${url}?id=${id}`;
+	        });
+	    });*/
+		document.querySelectorAll(".review-row").forEach(row => {
+
+		    row.addEventListener("click", () => {
+
+		        const token = localStorage.getItem("JWT");
+
+		        if (!token) {
+		            alert("Please login first.");
+		            window.location.href = window.loginUrl;
+		            return;
+		        }
+
+		        const id = row.dataset.id;
+				console.log("URL :"+  window.indexUrl + "?id=" + id);
+
+		        // Navigate to the editor page with the review id
+		        window.location.href = window.indexUrl + "?id=" + id;
+
+		    });
+
+		});
+
+});

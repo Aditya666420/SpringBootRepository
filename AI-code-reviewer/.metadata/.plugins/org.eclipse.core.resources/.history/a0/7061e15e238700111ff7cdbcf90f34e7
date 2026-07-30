@@ -1,0 +1,18 @@
+package com.auth.demo.entity;
+
+@Document("users")
+public class UserEntuty {
+
+    @Id
+    private String id;
+
+    private String username;
+
+    private String email;
+
+    private String password;
+
+    private String role = "USER";
+
+    // getters setters
+}

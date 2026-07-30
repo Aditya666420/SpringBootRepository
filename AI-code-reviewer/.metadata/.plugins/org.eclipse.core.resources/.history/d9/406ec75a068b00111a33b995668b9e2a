@@ -1,0 +1,5 @@
+package com.auth.demo.config;
+
+public class WebClientConfig {
+
+}

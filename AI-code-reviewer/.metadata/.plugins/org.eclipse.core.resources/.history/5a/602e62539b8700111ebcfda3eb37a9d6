@@ -1,0 +1,84 @@
+package com.example.demo.dto;
+
+import java.time.LocalDateTime;
+
+public class DashboardResponse {
+	
+	 public String id;
+
+	    public String code;
+	    
+	    public String language;
+
+	    public String reviewResult;
+
+	    public LocalDateTime createdAt;
+
+		public DashboardResponse() {
+			super();
+			// TODO Auto-generated constructor stub
+		}
+
+		public DashboardResponse(String id, String code, String language, String reviewResult,
+				LocalDateTime createdAt) {
+			super();
+			this.id = id;
+			this.code = code;
+			this.language = language;
+			this.reviewResult = reviewResult;
+			this.createdAt = createdAt;
+		}
+		public static Builder builder() {
+	        return new Builder();
+	    }
+
+	    public static class Builder {
+
+	        private String id;
+	        private String code;
+	        private String language;
+	        private String reviewResult;
+	        private LocalDateTime createdAt;
+
+	        public Builder id(String id) {
+	            this.id = id;
+	            return this;
+	        }
+
+	        public Builder code(String code) {
+	            this.code = code;
+	            return this;
+	        }
+
+	        public Builder language(String language) {
+	            this.language = language;
+	            return this;
+	        }
+
+	        public Builder reviewResult(String reviewResult) {
+	            this.reviewResult = reviewResult;
+	            return this;
+	        }
+
+	        public Builder createdAt(LocalDateTime createdAt) {
+	            this.createdAt = createdAt;
+	            return this;
+	        }
+
+	        public DashboardResponse build() {
+	            return new DashboardResponse(
+	                    id,
+	                    code,
+	                    language,
+	                    reviewResult,
+	                    createdAt
+	            );
+	        }
+	    }
+	}
+	    
+
+		
+	    
+
+}

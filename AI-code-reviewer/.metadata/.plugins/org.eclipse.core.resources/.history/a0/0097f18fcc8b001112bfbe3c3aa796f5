@@ -1,0 +1,86 @@
+package com.example.demo.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import com.example.demo.dto.LoginRequest;
+import com.example.demo.dto.LoginResponse;
+import com.example.demo.dto.PullRequestReviewResponse;
+import com.example.demo.dto.RegisterRequest;
+
+@Service
+public class AuthClientService {
+
+    @Autowired
+    WebClient webClient;
+
+    @Value("${auth.service.url}")
+    private String authUrl;
+
+    public LoginResponse login(
+            String username,
+            String password) {
+
+        LoginRequest request =
+                new LoginRequest();
+
+        request.setUsername(username);
+        request.setPassword(password);
+
+        return webClient.post()
+
+                .uri(authUrl + "/auth/login")
+
+                .bodyValue(request)
+
+                .retrieve()
+
+                .bodyToMono(LoginResponse.class)
+
+                .block();
+
+    }
+    public boolean register(RegisterRequest request) {
+
+        try {
+
+            webClient.post()
+
+                    .uri(authUrl + "/auth/register")
+
+                    .bodyValue(request)
+
+                    .retrieve()
+
+                    .toBodilessEntity()
+
+                    .block();
+
+            return true;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return false;
+        }
+
+    }
+    public List<PullRequestReviewResponse> reviewPullRequest(String url, String token) {
+
+    	 return webClient.get()
+    	            .uri(authUrl + "/github/pull?url={url}", url)
+    	            .header(HttpHeaders.AUTHORIZATION, token)
+    	            .retrieve()
+    	            .bodyToMono(Object.class)
+    	            .block();
+    }
+
+}
+
+

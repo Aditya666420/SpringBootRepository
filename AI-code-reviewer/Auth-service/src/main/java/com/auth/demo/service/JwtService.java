@@ -1,0 +1,35 @@
+package com.auth.demo.service;
+
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
+@Service
+public class JwtService {
+
+	@Value("${jwt.secret}")
+    private  String SECRET;
+	
+	@Value("${jwt.expiration}")
+	private String EXP;
+            
+
+    public String generateToken(String username,String id) {
+
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("userId", id)
+                .setIssuedAt(new Date())
+                .setExpiration(
+                        new Date(System.currentTimeMillis()+Long.parseLong(EXP)))
+                .signWith(
+                        Keys.hmacShaKeyFor(SECRET.getBytes()),
+                        SignatureAlgorithm.HS256)
+                .compact();
+    }
+}

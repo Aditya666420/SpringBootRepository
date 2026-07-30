@@ -1,0 +1,5 @@
+package com.auth.demo.service;
+
+public class CustomUserDetailsService {
+
+}

@@ -1,0 +1,70 @@
+package com.example.demo.service;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.dto.ReviewResponse;
+import com.example.demo.entity.Review;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.repo.ReviewRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+
+public class ReviewService {
+
+	@Autowired
+    private  ReviewRepository repository;
+	@Autowired
+    private GeminiService geminiService;
+
+    public ReviewResponse reviewCode(String code,String language,String jwtToken) {
+
+        String reviewResult =
+                geminiService.reviewCode(code,language);
+//Since not using lombok
+//        Review review =
+//                Review.builder()
+//                        .code(code)
+//                        .reviewResult(reviewResult)
+//                        .createdAt(LocalDateTime.now())
+//                        .build();
+
+		Review review = new Review();
+		
+		review.setCode(code);
+		review.setLanguage(language);
+		review.setReviewResult(reviewResult);
+		review.setCreatedAt(LocalDateTime.now());
+
+        repository.save(review);
+
+        return new ReviewResponse(reviewResult);
+    }
+
+    public List<Review> getAllReviews() {
+        return repository.findAll();
+    }
+
+    public Review getReviewById(String id) {
+
+    	return repository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Review not found with id: " + id));
+    }
+
+    public void deleteReview(String id) {
+
+    	Review review =
+                repository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Review not found with id: " + id));
+
+        repository.deleteById(id);
+    }
+}

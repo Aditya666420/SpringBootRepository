@@ -1,0 +1,115 @@
+let editor;
+
+require.config({
+    paths: {
+        vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs'
+    }
+});
+
+require(
+    ['vs/editor/editor.main'],
+    function () {
+
+        editor = monaco.editor.create(
+            document.getElementById('editor'),
+            {
+
+                value: previousCode || '',
+
+                language: 'java',
+
+                theme: 'vs-dark',
+
+                automaticLayout: true,
+
+                minimap: {
+                    enabled: false
+                }
+            }
+        );
+
+        document
+            .getElementById('language')
+            .addEventListener(
+                'change',
+                function () {
+
+                    monaco.editor.setModelLanguage(
+                        editor.getModel(),
+                        this.value
+                    );
+                }
+            );
+
+        document
+            .getElementById("reviewForm")
+            .addEventListener(
+                'submit',
+                async function () {
+
+					// Copy Monaco editor content into hidden input
+					   //document.getElementById("codeInput").value = editor.getValue();
+					   event.preventDefault();
+					     // JWT saved after login
+					   const token = localStorage.getItem("JWT");
+					   document.getElementById("codeInput").value = editor.getValue();
+					   const code = document.getElementById("codeInput").value;
+					   document.getElementById("language").value = editor.getLanguage();
+					   const language = document.getElementById("language").value;
+
+					   console.log(code);
+					   const request = {
+					               code: code,
+					               language: language
+					           };
+					   		console.log("Request :"+ request);
+
+					           try {
+
+					               const response = await fetch(reviewUrl, {
+
+					                   method: "POST",
+
+					                   headers: {
+					                       "Content-Type": "application/json",
+					                       "Authorization": "Bearer " + token
+					                   },
+
+					                   body: JSON.stringify(request)
+
+					               });
+
+					               if (!response.ok) {
+					                   throw new Error("Request Failed");
+					               }
+
+					               const result = await response.json();
+
+					               console.log(result);
+
+					               document.querySelector(".review-content").innerText =
+					                   result.reviewResult;
+
+					           } catch (error) {
+
+					               console.error(error);
+					   			const errorBox = document.getElementById("errorBox");
+					   			    const errorMessage = document.getElementById("errorMessage");
+
+					   			    errorMessage.innerText = error.message;
+
+					   			    errorBox.style.display = "block";
+
+					               alert("Unable to review code");
+
+					           }
+
+					       });
+                
+            
+			
+			
+			
+			
+    }
+);

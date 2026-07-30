@@ -1,0 +1,100 @@
+document.addEventListener("DOMContentLoaded", () => {
+
+    const form = document.getElementById("reviewForm");
+
+    form.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        // JWT saved after login
+        const token = localStorage.getItem("JWT");
+
+        const code = document.getElementById("codeInput").value;
+        const language = document.getElementById("language").value;
+
+        const request = {
+            code: code,
+            language: language
+        };
+
+        try {
+
+            const response = await fetch("/review", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+
+                body: JSON.stringify(request)
+
+            });
+
+            if (!response.ok) {
+                throw new Error("Request Failed");
+            }
+
+            const result = await response.json();
+
+            console.log(result);
+
+            document.querySelector(".review-content").innerText =
+                result.reviewResult;
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Unable to review code");
+
+        }
+
+    });
+	const dashboardBtn = document.getElementById("dashboardBtn");
+
+	 dashboardBtn.addEventListener("click", async () => {
+
+	     const token = localStorage.getItem("JWT");
+
+	     if (!token) {
+	         alert("Please login first.");
+	         window.location.href = "/login";
+	         return;
+	     }
+
+	     try {
+
+	         const response = await fetch(dashboardUrl, {
+
+	             method: "GET",
+
+	             headers: {
+	                 "Authorization": "Bearer " + token
+	             }
+
+	         });
+
+	         if (!response.ok) {
+	             throw new Error("Unable to load dashboard");
+	         }
+
+	         // Dashboard controller returns HTML
+	         const html = await response.text();
+
+	         document.open();
+	         document.write(html);
+	         document.close();
+
+	     } catch (error) {
+
+	         console.error(error);
+
+	         alert("Unable to load dashboard.");
+
+	     }
+
+	 });
+
+});

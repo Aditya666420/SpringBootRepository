@@ -1,0 +1,37 @@
+spring.application.name=Auth-service
+
+server.port=8083
+
+
+spring.data.mongodb.uri=mongodb://localhost:27017/code_review_db
+# ==========================================
+# Eureka
+# ==========================================
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.instance.prefer-ip-address=true
+
+# ==========================================
+# JWT
+# ==========================================
+jwt.secret=ThisIsMyVerySecretKeyForJwtGenerationThatShouldBeAtLeast32CharactersLong
+jwt.expiration=86400000
+
+# ==========================================
+# Logging
+# ==========================================
+logging.level.org.springframework.security=DEBUG
+logging.level.org.springframework.web=INFO
+
+# ==========================================
+# GitHub OAuth2
+# ==========================================
+
+spring.security.oauth2.client.registration.github.client-id=Ov23liK3SFjKiLhijnND
+spring.security.oauth2.client.registration.github.client-secret=ce76f65db75258121ada66c225eff1ae970440b9
+
+spring.security.oauth2.client.registration.github.scope=read:user,user:email,repo
+
+spring.security.oauth2.client.provider.github.authorization-uri=https://github.com/login/oauth/authorize
+spring.security.oauth2.client.provider.github.token-uri=https://github.com/login/oauth/access_token
+spring.security.oauth2.client.provider.github.user-info-uri=https://api.github.com/user
+spring.security.oauth2.client.provider.github.user-name-attribute=id

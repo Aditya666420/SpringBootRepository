@@ -1,0 +1,71 @@
+package com.example.demo.dto;
+
+import java.time.LocalDateTime;
+
+
+
+public class DashboardResponse {
+
+   
+    private String id;
+    
+   private String userId;
+
+    private String code;
+    
+    private String language;
+
+    private String reviewResult;
+
+    private LocalDateTime createdAt;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+
+	public String getReviewResult() {
+		return reviewResult;
+	}
+
+	public void setReviewResult(String reviewResult) {
+		this.reviewResult = reviewResult;
+	}
+
+	public LocalDateTime getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+    
+}
+

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+
+    <title>AI Code Reviewer</title>
+	<script th:inline="javascript">
+	    const dashboardUrl = /*[[@{/dashboard}]]*/ '';
+		const reviewUrl = /*[[@{/review}]]*/ '';
+		const loginUrl = /*[[@{/login}]]*/ '';
+	</script>
+	<script th:src="@{/js/index.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+	<div class="header">
+
+	    <h1>AI Code Reviewer</h1>
+
+	    <a>
+	        <button type="button" id ="dashboardBtn" class="dashboard-btn">
+	            Dashboard
+	        </button>
+	    </a>
+
+	</div>
+
+
+    <form id="reviewForm">
+
+        <label>Select Language:</label>
+
+        <select id="language" name = "language">
+            <option value="java">Java</option>
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+        </select>
+
+        <br><br>
+
+        <div id="editor"></div>
+
+        <input
+                type="hidden"
+                id="codeInput"
+                name="code">
+
+        <button type="submit">
+            Review Code
+        </button>
+
+    </form>
+
+    <div class="review-box">
+
+        <h2>Review Result</h2>
+
+        <pre class="review-content"
+             >
+        </pre>
+
+    </div>
+	<div id="errorBox" class="error-box" style="display: none;">
+
+	    <h3>Error</h3>
+
+	    <p id="errorMessage"></p>
+
+	</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
+
+<script th:inline="javascript">
+
+    let previousCode = /*[[${code}]]*/ '';
+
+</script>
+
+<script th:src="@{/js/editor.js}"></script>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+package com.auth.demo.controller;
+
+public class GithubController {
+
+}

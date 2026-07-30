@@ -1,0 +1,15 @@
+package com.auth.demo.repo;
+
+import java.util.Optional;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
+import com.auth.demo.entity.UserEntity;
+
+@Repository
+public interface UserRepository extends MongoRepository<UserEntity,String>{
+
+    Optional<UserEntity> findByUsername(String username);
+
+}

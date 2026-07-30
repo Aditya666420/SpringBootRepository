@@ -1,0 +1,73 @@
+package com.auth.demo.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.auth.demo.dto.LoginRequest;
+import com.auth.demo.dto.LoginResponse;
+import com.auth.demo.dto.RegisterRequest;
+import com.auth.demo.entity.UserEntity;
+import com.auth.demo.repo.UserRepository;
+
+@Service
+public class AuthService {
+	@Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtService jwtService;
+    
+    @Autowired
+    private UserRepository repo;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    public LoginResponse authLogin(LoginRequest request) {
+    	   Authentication authentication =
+	                authenticationManager.authenticate(
+
+	                        new UsernamePasswordAuthenticationToken(
+	                                request.getUsername(),
+	                                request.getPassword()));
+
+	        if(authentication.isAuthenticated()) {
+
+	            String token = jwtService.generateToken(
+	                    request.getUsername());
+	            LoginResponse resp = new LoginResponse(token);
+	            return resp;
+	        }
+
+	        throw new RuntimeException("Invalid Credentials");
+    }
+    public UserEntity register(RegisterRequest request) {
+
+        if (repo.existsByPassword(passwordEncoder.encode(request.getPassword()))) {
+            throw new RuntimeException("Username already exists.");
+        }
+
+        UserEntity user = new UserEntity();
+
+        user.setUsername(request.getUsername());
+
+        user.setPassword(
+                passwordEncoder.encode(request.getPassword())
+        );
+
+        user.setRole("USER");
+
+        return repo.save(user);
+        
+        
+
+       
+    }
+
+	
+
+}

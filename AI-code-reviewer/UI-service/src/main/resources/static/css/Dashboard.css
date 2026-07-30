@@ -1,0 +1,40 @@
+body{
+
+    background:#1f1f1f;
+
+}
+
+.card{
+
+    border:none;
+
+    border-radius:12px;
+
+}
+
+.table-hover tbody tr:hover{
+
+    background:#d9ecff;
+    transition:.3s;
+
+}
+
+.table td{
+
+    vertical-align:middle;
+
+}
+
+.text-truncate{
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+}
+
+.badge{
+
+    font-size:14px;
+
+}

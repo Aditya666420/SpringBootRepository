@@ -1,0 +1,95 @@
+package com.example.demo.service;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.dto.DashboardResponse;
+import com.example.demo.dto.ReviewResponse;
+import com.example.demo.entity.Review;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.repo.ReviewRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+
+public class ReviewService {
+
+	@Autowired
+    private  ReviewRepository repository;
+	@Autowired
+    private GeminiService geminiService;
+	
+	@Autowired
+	private JwtService jwtService;
+
+    public ReviewResponse reviewCode(String code,String language,String jwtToken) {
+
+        String reviewResult =
+                geminiService.reviewCode(code,language);
+//Since not using lombok
+//        Review review =
+//                Review.builder()
+//                        .code(code)
+//                        .reviewResult(reviewResult)
+//                        .createdAt(LocalDateTime.now())
+//                        .build();
+        
+        String userId = jwtService.extractUserId(jwtToken);
+        System.out.println(userId);
+
+		Review review = new Review();
+		
+		review.setCode(code);
+		review.setLanguage(language);
+		review.setReviewResult(reviewResult);
+		review.setCreatedAt(LocalDateTime.now());
+		review.setUserId(userId);
+
+        repository.save(review);
+
+        return new ReviewResponse(reviewResult);
+    }
+    public DashboardResponse objMapper(Review review) {
+    	DashboardResponse response = DashboardResponse.builder()
+    	        .id(review.getId())
+    	        .code(review.getCode())
+    	        .language(review.getLanguage())
+    	        .reviewResult(review.getReviewResult())
+    	        .createdAt(review.getCreatedAt()))
+    	        .build();
+    	
+    }
+
+    public List<Review> getAllReviews() {
+        return repository.findAll();
+    }
+    public List<Review> getAllByUserId(String token){
+    	String userId = jwtService.extractUserId(token);
+    	
+        System.out.println(userId);
+    	return repository.findByUserId(userId).orElseThrow(()->new ResourceNotFoundException(
+                "Review not found with for user id: " + userId));
+    }
+
+    public Review getReviewById(String id) {
+
+    	return repository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Review not found with id: " + id));
+    }
+
+    public void deleteReview(String id) {
+
+    	Review review =
+                repository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Review not found with id: " + id));
+
+        repository.deleteById(id);
+    }
+}

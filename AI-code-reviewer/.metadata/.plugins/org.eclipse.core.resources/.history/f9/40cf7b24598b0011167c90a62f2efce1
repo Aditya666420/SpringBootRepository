@@ -1,0 +1,5 @@
+package com.auth.demo.dto;
+
+public class ReviewRequest {
+
+}

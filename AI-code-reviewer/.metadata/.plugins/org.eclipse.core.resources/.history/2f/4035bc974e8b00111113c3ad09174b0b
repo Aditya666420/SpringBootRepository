@@ -1,0 +1,33 @@
+package com.auth.demo.dto;
+
+
+public class GithubPullRequestFile {
+
+    private String filename;
+    private String status;
+    private String contents_url;
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getContents_url() {
+        return contents_url;
+    }
+
+    public void setContents_url(String contents_url) {
+        this.contents_url = contents_url;
+    }
+}
