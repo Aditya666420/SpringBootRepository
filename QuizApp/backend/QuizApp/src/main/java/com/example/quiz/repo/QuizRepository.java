@@ -1,0 +1,4 @@
+package com.example.quiz.repo;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import com.example.quiz.section.Quiz;
+public interface QuizRepository extends MongoRepository<Quiz, String> {}

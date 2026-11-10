@@ -1,0 +1,38 @@
+package com.example.quiz.service;
+
+package com.quizapp.service;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+public class PdfService {
+
+    /** Returns the text of each page (index 0 = page 1). */
+    public List<String> extractPages(byte[] pdf) {
+        try (PDDocument doc = Loader.loadPDF(pdf)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            List<String> pages = new ArrayList<>();
+            for (int p = 1; p <= doc.getNumberOfPages(); p++) {
+                stripper.setStartPage(p);
+                stripper.setEndPage(p);
+                pages.add(stripper.getText(doc).replaceAll("[ \\t]+", " ").trim());
+            }
+            int totalChars = pages.stream().mapToInt(String::length).sum();
+            if (totalChars < 200) {
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Not enough readable text in this PDF (scanned/image-only PDFs are not supported).");
+            }
+            return pages;
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not read the PDF file.", e);
+        }
+    }
+}

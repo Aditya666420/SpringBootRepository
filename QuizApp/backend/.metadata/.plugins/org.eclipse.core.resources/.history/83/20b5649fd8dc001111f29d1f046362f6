@@ -1,0 +1,20 @@
+spring.application.name=QuizApp
+server.port=8080
+server.error.include-message=always
+
+spring.data.mongodb.uri=mongodb://localhost:27017/quizapp
+spring.servlet.multipart.max-file-size=20MB
+spring.servlet.multipart.max-request-size=20MB
+
+# Ollama
+ollama.base-url=http://localhost:11434
+ollama.model=qwen3.5:4b
+ollama.num-ctx=8192
+ollama.timeout-seconds=300
+
+# Quiz settings
+quiz.total-questions=10
+quiz.max-sections=5
+quiz.max-chars-per-section=6000
+quiz.weak-threshold-percent=70
+quiz.allowed-origins=http://localhost:5173,http://localhost:3000

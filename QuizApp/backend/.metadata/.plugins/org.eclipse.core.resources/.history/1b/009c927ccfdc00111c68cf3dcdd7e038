@@ -1,0 +1,85 @@
+package com.example.quiz.service;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.example.quiz.config.QuizProperties;
+import com.example.quiz.repo.QuizRepository;
+import com.example.quiz.section.Quiz;
+import com.example.quiz.section.Section;
+
+@Service
+public class QuizGenerationService {
+
+    private final PdfService pdf;
+    private final OllamaClient ollama;
+    private final QuizRepository quizzes;
+    private final QuizProperties props;
+
+    public QuizGenerationService(PdfService pdf, OllamaClient ollama, QuizRepository quizzes, QuizProperties props) {
+        this.pdf = pdf;
+        this.ollama = ollama;
+        this.quizzes = quizzes;
+        this.props = props;
+    }
+
+    public Quiz generate(String fileName, String title, byte[] pdfBytes) {
+        List<String> pages = pdf.extractPages(pdfBytes);
+
+        // 1. Split the pages into up to N sections of consecutive pages
+        int sectionCount = Math.min(props.maxSections(), pages.size());
+        int pagesPerSection = (int) Math.ceil(pages.size() / (double) sectionCount);
+
+        List<Section> sections = new ArrayList<>();
+        List<String> sectionTexts = new ArrayList<>();
+        for (int s = 0; s * pagesPerSection < pages.size(); s++) {
+            int start = s * pagesPerSection;
+            int end = Math.min(pages.size(), start + pagesPerSection);
+            String text = String.join("\n", pages.subList(start, end)).trim();
+            if (text.length() < 50) continue; // skip empty sections (e.g. image-only pages)
+            if (text.length() > props.maxCharsPerSection()) {
+                text = text.substring(0, props.maxCharsPerSection());
+            }
+            int idx = sections.size();
+            sections.add(new Section(idx, sectionTitle(text, start + 1, end), start + 1, end));
+            sectionTexts.add(text);
+        }
+        if (sections.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "No usable text found in the PDF.");
+        }
+
+        // 2. Spread the questions evenly over the sections, one model call per section
+        int total = props.totalQuestions();
+        int base = total / sections.size();
+        int extra = total % sections.size();
+
+        List<Question> questions = new ArrayList<>();
+        for (int s = 0; s < sections.size(); s++) {
+            int want = base + (s < extra ? 1 : 0);
+            if (want == 0) continue;
+            for (OllamaClient.RawQuestion r : ollama.generateQuestions(sectionTexts.get(s), want)) {
+                questions.add(new Question(questions.size(), s, r.question(), r.options(),
+                        r.correctIndex(), r.explanation()));
+            }
+        }
+        if (questions.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "The AI model did not return any valid questions. Is Ollama running and the model pulled?");
+        }
+
+        String finalTitle = (title == null || title.isBlank())
+                ? fileName.replaceAll("(?i)\\.pdf$", "") : title.trim();
+        return quizzes.save(new Quiz(null, finalTitle, fileName, sections, questions, Instant.now()));
+    }
+
+    private String sectionTitle(String text, int startPage, int endPage) {
+        String firstLine = text.lines().map(String::trim).filter(l -> l.length() > 3).findFirst().orElse("");
+        if (firstLine.length() > 60) firstLine = firstLine.substring(0, 60).trim() + "…";
+        String pages = startPage == endPage ? "Page " + startPage : "Pages " + startPage + "-" + endPage;
+        return firstLine.isBlank() ? pages : pages + ": " + firstLine;
+    }
+}

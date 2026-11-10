@@ -1,0 +1,3 @@
+package com.example.quiz.section;
+
+public record Section(int index, String title, int startPage, int endPage) {}

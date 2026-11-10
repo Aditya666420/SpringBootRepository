@@ -1,0 +1,123 @@
+package com.example.quiz.service;
+
+
+import com.example.quiz.config.OllamaProperties;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+@Component
+public class OllamaClient {
+
+    private static final Logger log = LoggerFactory.getLogger(OllamaClient.class);
+
+    public record RawQuestion(String question, List<String> options, int correctIndex, String explanation) {}
+
+    private final RestClient http;
+    private final OllamaProperties props;
+    private final ObjectMapper mapper;
+
+    public OllamaClient(RestClient ollamaRestClient, OllamaProperties props, ObjectMapper mapper) {
+        this.http = ollamaRestClient;
+        this.props = props;
+        this.mapper = mapper;
+    }
+
+    // JSON schema passed to Ollama's "format" field to force well-formed output
+    private static final Map<String, Object> QUESTIONS_SCHEMA = Map.of(
+            "type", "object",
+            "properties", Map.of("questions", Map.of(
+                    "type", "array",
+                    "items", Map.of(
+                            "type", "object",
+                            "properties", Map.of(
+                                    "question", Map.of("type", "string"),
+                                    "options", Map.of("type", "array", "items", Map.of("type", "string")),
+                                    "correctIndex", Map.of("type", "integer"),
+                                    "explanation", Map.of("type", "string")),
+                            "required", List.of("question", "options", "correctIndex", "explanation")))),
+            "required", List.of("questions"));
+
+    /** Asks the model for `count` MCQs based only on the given text. Retries on bad output. */
+    public List<RawQuestion> generateQuestions(String sectionText, int count) {
+        String prompt = """
+                You are a quiz writer. Using ONLY the study material below, write exactly %d \
+                multiple-choice questions that test understanding of it.
+                Rules:
+                - Each question has exactly 4 options and exactly one correct option.
+                - "correctIndex" is the 0-based index (0-3) of the correct option.
+                - Vary the position of the correct option.
+                - "explanation" is one short sentence saying why the answer is correct.
+                - Do not refer to "the text" or "the passage" in the questions.
+                Return JSON only.
+
+                STUDY MATERIAL:
+                %s
+                """.formatted(count, sectionText);
+
+        List<RawQuestion> best = List.of();
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                String content = chat(prompt, QUESTIONS_SCHEMA);
+                List<RawQuestion> parsed = parseAndValidate(content);
+                if (parsed.size() >= count) {
+                    return parsed.subList(0, count);
+                }
+                if (parsed.size() > best.size()) best = parsed;
+                log.warn("Ollama returned {} valid questions, wanted {} (attempt {})", parsed.size(), count, attempt);
+            } catch (Exception e) {
+                log.warn("Question generation attempt {} failed: {}", attempt, e.getMessage());
+            }
+        }
+        return best;
+    }
+
+    /** Short plain-text study advice. Returns null on failure so callers can fall back. */
+    public String studyTips(String prompt) {
+        try {
+            String text = chat(prompt, null);
+            return text == null ? null : text.trim();
+        } catch (Exception e) {
+            log.warn("Study tips generation failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private String chat(String prompt, Map<String, Object> schema) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", props.model());
+        body.put("stream", false);
+        body.put("think", false); // skip the reasoning phase: faster and keeps JSON clean
+        body.put("messages", List.of(Map.of("role", "user", "content", prompt)));
+        body.put("options", Map.of("temperature", 0.3, "num_ctx", props.numCtx()));
+        if (schema != null) body.put("format", schema);
+
+        JsonNode res = http.post().uri("/api/chat").body(body).retrieve().body(JsonNode.class);
+        return res == null ? null : res.path("message").path("content").asText(null);
+    }
+
+    private List<RawQuestion> parseAndValidate(String content) throws Exception {
+        if (content == null) return List.of();
+        JsonNode arr = mapper.readTree(content).path("questions");
+        List<RawQuestion> out = new ArrayList<>();
+        for (JsonNode n : arr) {
+            String q = n.path("question").asText("").trim();
+            String expl = n.path("explanation").asText("").trim();
+            int correct = n.path("correctIndex").asInt(-1);
+            List<String> opts = new ArrayList<>();
+            n.path("options").forEach(o -> opts.add(o.asText("").trim()));
+            boolean ok = !q.isBlank() && opts.size() == 4 && opts.stream().noneMatch(String::isBlank)
+                    && opts.stream().distinct().count() == 4 && correct >= 0 && correct < 4;
+            if (ok) out.add(new RawQuestion(q, opts, correct, expl));
+        }
+        return out;
+    }
+}

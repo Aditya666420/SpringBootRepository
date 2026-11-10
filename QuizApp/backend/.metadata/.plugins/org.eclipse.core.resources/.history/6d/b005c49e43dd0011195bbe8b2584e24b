@@ -1,0 +1,76 @@
+package com.example.quiz.service;
+
+
+import com.example.quiz.section.Question;
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
+
+@Service
+public class QuizPdfService {
+
+    private static final Font TITLE = new Font(Font.HELVETICA, 18, Font.BOLD);
+    private static final Font Q_FONT = new Font(Font.HELVETICA, 12, Font.BOLD);
+    private static final Font OPT_FONT = new Font(Font.HELVETICA, 11);
+    private static final Font META = new Font(Font.HELVETICA, 10, Font.ITALIC);
+    private static final Font ANS_FONT = new Font(Font.HELVETICA, 11, Font.BOLD);
+
+    /** includeAnswers=false gives a blank question paper; true adds an answer key page. */
+    public byte[] generate(String title, List<Question> questions, boolean includeAnswers) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document doc = new Document(PageSize.A4, 50, 50, 50, 50);
+            PdfWriter.getInstance(doc, out);
+            doc.open();
+
+            doc.add(new Paragraph(title, TITLE));
+            doc.add(new Paragraph(" "));
+
+            for (int i = 0; i < questions.size(); i++) {
+                Question q = questions.get(i);
+
+                doc.add(new Paragraph((i + 1) + ". " + q.question(), Q_FONT));
+                doc.add(new Paragraph("Section " + (q.sectionIndex() + 1), META));
+
+                char label = 'A';
+                for (String opt : q.options()) {
+                    Paragraph p = new Paragraph(label + ") " + opt, OPT_FONT);
+                    p.setIndentationLeft(20);
+                    doc.add(p);
+                    label++;
+                }
+                doc.add(new Paragraph(" "));
+            }
+
+            if (includeAnswers) {
+                doc.newPage();
+                doc.add(new Paragraph("Answer Key", TITLE));
+                doc.add(new Paragraph(" "));
+
+                for (int i = 0; i < questions.size(); i++) {
+                    Question q = questions.get(i);
+                    int ci = q.correctIndex();
+                    char correct = (char) ('A' + ci);
+                    doc.add(new Paragraph(
+                            (i + 1) + ". " + correct + ") " + q.options().get(ci), ANS_FONT));
+
+                    if (q.explanation() != null && !q.explanation().isBlank()) {
+                        Paragraph e = new Paragraph("Explanation: " + q.explanation(), META);
+                        e.setIndentationLeft(20);
+                        doc.add(e);
+                    }
+                }
+            }
+
+            doc.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("PDF generation failed", e);
+        }
+    }
+}
